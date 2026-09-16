@@ -17,9 +17,9 @@ The rubric design follows the same pattern used in Dr. Amjad's prior work on LLM
 | [`docs/week2-progress-report.md`](docs/week2-progress-report.md) | Week 2 progress report (rubric tested on 3 real Howard University CSCI 100 lectures) |
 | [`Progress_Report_Sept9.docx`](Progress_Report_Sept9.docx) | Same report as a Word document |
 | [`docs/literature-review-synthesis.md`](docs/literature-review-synthesis.md) | Early literature review synthesis (5 papers) grounding the rubric and pipeline design |
-| [`Literature_Review_Synthesis.docx`](Literature_Review_Synthesis.docx) | Same early synthesis as a Word document |
+| [`Literature_Review_SynthesisSept9.docx`](Literature_Review_SynthesisSept9.docx) | Same early synthesis as a Word document |
 | [`Comprehensive_Literature_Review.txt`](Comprehensive_Literature_Review.txt) | Expanded literature review synthesis (11 papers), plain text |
-| [`Literature_Review_Synthesis_Full.docx`](Literature_Review_Synthesis_Full.docx) | Same expanded synthesis as a Word document |
+| [`Literature_Review_Synthesis_FullSept16.docx`](Literature_Review_Synthesis_FullSept16.docx) | Same expanded synthesis as a Word document |
 | [`docs/paper-links.md`](docs/paper-links.md) | Direct links to all 11 cited papers, plus the 4 excluded for requiring paywalled/TTU-library access |
 | [`lecture_rating_pipeline.py`](lecture_rating_pipeline.py) | Transcript acquisition + automated signal-extraction script (Stages 1–2 of the pipeline) |
 
