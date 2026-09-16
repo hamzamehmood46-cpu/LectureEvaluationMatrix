@@ -1,0 +1,64 @@
+Literature Review Synthesis: Automated, Rubric-Based Evaluation of Lecture Quality
+Hamza Mehmood, prepared for Professor Maaz Amjad, September 2026
+
+This pulls together everything I've read so far for the lecture-rating matrix project, minus a few papers that are paywalled and would need TTU library access to read in full (I've left those out rather than write around content I couldn't actually verify). It covers eleven papers total: three of your own with Haseeb and co-authors, and eight others I found searching independently. I've organized it by theme rather than paper by paper, since a few of these overlap.
+
+1. LLM Rubric Evaluation
+
+Two of your papers with Haseeb (Toward Cross-Domain Automated Feedback, BEA Workshop 2026, and From Code to Rubrics, ACM WWW Companion 2026) evaluate open-source LLMs generating and judging feedback on student programming, writing, and math work. Both break the rubric into a handful of named dimensions, each with two to six binary or graded sub-criteria that add up to a point total, and both find that a single well-written prompt does about as well as a multi-agent pipeline when the task is well-defined. They also find that judges asked to reason through the criteria before scoring agree with human raters more than judges asked to just give a number. Those two ideas, a decomposed rubric and reasoning before scoring, are basically what the lecture matrix is built around.
+
+A third paper you co-authored with a different group (Nkoyo, Ijezue, Amjad, Amjad, Butt and Castaneda-Garza, 2025, also BEA) surveys thirty studies of LLM auto-grading across six disciplines. The finding that matters here: LLM-human agreement is much higher on objective subjects like math than on subjective ones like humanities writing. Rating a lecture is closer to the subjective end of that spectrum, so I'm treating our automated scores as a first draft rather than something to trust outright until we've checked them against human ratings.
+
+A fourth paper, not from your group, Rubric-Conditioned LLM Grading: Alignment, Uncertainty, and Robustness (2026), adds two things worth building into the pipeline early. First, grading accuracy drops a lot on finer scales, with much better agreement on yes or no criteria than on a five-point scale, which backs up keeping our sub-criteria binary or coarse instead of finely graded. Second, it proposes having the judge flag low-confidence scores for a human to check rather than forcing a number every time.
+
+2. Segmenting a Transcript by Topic
+
+Before we can score topic coverage properly, the transcript probably needs to be split into chunks that match what is on the syllabus. Right now the pipeline script just counts keywords across the whole transcript, which cannot tell a topic that got five minutes of real explanation from one that got a passing mention. Two papers help here. TreeSeg: Hierarchical Topic Segmentation of Large Transcripts (2024) splits a long transcript into topic segments using sentence embeddings, with no labeled training data required, which is useful since we will not have per-lecture labels either. A Springer paper on segmenting lecture videos specifically compares silence gaps in the audio against keyword shifts in the text as ways to find topic boundaries. TreeSeg is probably the better fit for us since it only needs the transcript text, not the audio track.
+
+3. Automated Assessment of Teaching Quality
+
+A separate line of work automates the scoring of live teaching instead of student work. A Duke framework for online instruction videos pulls five signals from the recording, who is speaking, tone of voice, the transcript, facial expression, and gaze, and scores lectures on clarity, classroom interaction, technical quality, empathy, and time management, reportedly matching expert raters closely on a small dataset.
+
+Two more recent papers look specifically at classroom dialogue and discourse rather than overall lecture quality. Evaluating Large Language Models in Analysing Classroom Dialogue (npj Science of Learning, 2024) tested whether GPT-4 could replace manual coding of classroom talk. Researchers ran twelve real classroom lessons through both human coders and a customized GPT-4 setup using a fifteen-category dialogue coding scheme, and GPT-4 agreed with the humans over ninety percent of the time while being roughly thirty times faster. It did worse specifically on categories that require reading context rather than picking up an explicit phrase, things like recognizing when a teacher is inviting students to build on each other's ideas. That is a useful warning for us: rubric criteria that ask the judge to infer something less concrete, like whether an explanation was genuinely clear, are probably going to be less reliable than criteria that just check whether something concrete happened, like whether an example was given.
+
+Utilizing Natural Language Processing for Automated Assessment of Classroom Discussion (arXiv, 2023) takes a different technical approach entirely. Instead of asking an LLM to output a score directly, the researchers trained smaller BERT-based models to first tag specific teacher and student moves in a transcript, such as a teacher connecting one student's comment to another's or a student backing up a claim with evidence, and then used a separate regression step to convert counts of those moves into an overall quality score. This tag-then-score pipeline clearly beat a simpler baseline that tried to go straight from raw transcript to score in one step. It is a genuinely different architecture than the LLM-as-judge approach we are using, and worth keeping as a fallback if our judge turns out to be too inconsistent, at the cost of needing labeled training data we do not currently have.
+
+Across all three of these, the same pattern shows up: scoring a lecture on several separate, named dimensions is standard practice in this literature, not just something the rubric-evaluation papers do, and even the best-performing automated systems in this space still need real human validation before they can be trusted.
+
+4. What Makes a Lecture Well-Delivered
+
+A Springer review of instructional-video research lists a few evidence-backed habits: instructors who draw or annotate live instead of just showing static slides, who shift their gaze between camera and material, who prompt students to summarize or explain something mid-lecture, and who film demonstrations from a first-person angle all see better learning outcomes. This maps onto the Delivery and Structure part of our matrix, backing up scoring engagement and pacing, but it does not touch content-level things like topic coverage or number of examples, which is the specific gap our matrix is trying to fill.
+
+5. How Reliable Are LLM Judges
+
+Since the pipeline leans on an LLM to apply the rubric, it is worth knowing where LLM judges tend to go wrong. A recent survey on LLM-as-a-judge (EMNLP 2025) documents a few recurring biases: judges tend to favor longer, more confident-sounding answers regardless of actual quality, they lean toward outputs that resemble their own writing style, and they can be swayed by adversarial or injected text. The Rubric-Conditioned Grading paper from section one adds a more specific warning: judge accuracy held up fine against adversarial prompt injection but dropped when the same content was simply reworded, meaning two lectures that cover the same material in different words could plausibly get scored differently. And the classroom dialogue paper from section three adds a third data point in the same direction: LLM judges are noticeably weaker on anything requiring contextual inference rather than literal pattern matching. The fixes suggested across these sources point the same way: spell the rubric out explicitly in the prompt, have the judge reason before scoring, keep the criteria coarse rather than finely graded, and keep a human checking its work, especially on the more subjective sub-criteria.
+
+6. Where This Leaves Us
+
+Nothing reviewed here scores a lecture specifically on topic coverage, examples, and implementation from transcript text alone using an LLM judge. The closest work (Duke, the classroom dialogue papers) either leans on video and audio signals we do not have, or scores discourse-quality dimensions like empathy and interaction rather than content-specific ones like whether a topic was actually covered in depth. The closest text-only work just finds topic boundaries or tags discourse moves; none of it scores coverage the way our matrix does. So this project is filling a real, specific gap rather than duplicating something that already exists.
+
+A few concrete things from this reading should shape how the pipeline gets built next: segment the transcript by topic before scoring coverage, rather than scanning the whole thing for keywords at once. Keep the rubric's sub-criteria binary or coarse rather than finely graded. Add a confidence check so the judge flags uncertain scores for review instead of just picking a number. Expect the more subjective sub-criteria, like clarity of explanation, to be less reliable than the more concrete ones, like whether an example or code was shown, and weight human spot-checks accordingly. And keep treating human calibration as a required step before trusting the automated pipeline unsupervised, not a formality.
+
+References
+
+Haseeb, M., Hmue, M. P., Amjad, A. I., Amjad, M., and Sheng, V. S. (2026). Toward Cross-Domain Automated Feedback: A Comparative Evaluation of Open-Source Models across Diverse Student Assessment Types. Proceedings of the 21st Workshop on Innovative Use of NLP for Building Educational Applications (BEA), 951-963.
+
+Haseeb, M., Amjad, A. I., Amjad, M., and Sheng, V. S. (2026). From Code to Rubrics: A Multimodal Evaluation of LLM Systems for Automated Feedback Generation. Companion Proceedings of the ACM Web Conference 2026 (WWW Companion), 868-879.
+
+Nkoyo, F. E. T., Ijezue, C. F., Amjad, M., Amjad, A. I., Butt, S., and Castaneda-Garza, G. (2025). Advances in Auto-Grading with Large Language Models: A Cross-Disciplinary Survey. Proceedings of the 20th Workshop on Innovative Use of NLP for Building Educational Applications (BEA), 477-498.
+
+Rubric-Conditioned LLM Grading: Alignment, Uncertainty, and Robustness. (2026). arXiv, abs/2601.08843.
+
+TreeSeg: Hierarchical Topic Segmentation of Large Transcripts. (2024). arXiv, abs/2407.12028.
+
+Topic Segmentation of Educational Video Lectures Using Audio and Text. Springer, DOI 10.1007/978-3-031-50485-3_43.
+
+Opportunities and Challenges of LLM-as-a-Judge. (2025). Proceedings of EMNLP 2025.
+
+A Multimodal Framework for Automated Teaching Quality Assessment of One-to-Many Online Instruction Videos. Duke University.
+
+Five Evidence-Based Recommendations for Effective Instructional Video. Educational Technology Research and Development, DOI 10.1007/s11423-020-09749-6.
+
+Evaluating Large Language Models in Analysing Classroom Dialogue. (2024). npj Science of Learning.
+
+Utilizing Natural Language Processing for Automated Assessment of Classroom Discussion. (2023). arXiv, abs/2306.14918.
