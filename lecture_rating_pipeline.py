@@ -38,8 +38,14 @@ def fetch_transcript(video_id: str) -> str:
     if YouTubeTranscriptApi is None:
         raise RuntimeError("pip install youtube-transcript-api first")
     video_id = extract_video_id(video_id)
-    segments = YouTubeTranscriptApi.get_transcript(video_id)
-    return " ".join(s["text"].strip() for s in segments if s["text"].strip())
+    # youtube-transcript-api >= 1.0 replaced the classmethod get_transcript()
+    # with an instance method fetch() returning objects, not dicts. Support both
+    # so the script works regardless of which version is installed.
+    if hasattr(YouTubeTranscriptApi, "get_transcript"):
+        segments = YouTubeTranscriptApi.get_transcript(video_id)
+        return " ".join(s["text"].strip() for s in segments if s["text"].strip())
+    fetched = YouTubeTranscriptApi().fetch(video_id)
+    return " ".join(s.text.strip() for s in fetched.snippets if s.text.strip())
 
 
 # ---------- Stage 2: cheap automated signal extraction ----------
@@ -49,7 +55,7 @@ def fetch_transcript(video_id: str) -> str:
 
 EXAMPLE_MARKERS = [
     r"\bfor example\b", r"\blet'?s say\b", r"\bsuppose\b", r"\bimagine\b",
-    r"\bconsider (?:this|the case)\b", r"\bas an example\b", r"\be\.g\.\b",
+    r"\bconsider (?:this|the case)\b", r"\bas an example\b", r"\be\.g\.",
     r"\btake this case\b", r"\bhere'?s an example\b",
 ]
 

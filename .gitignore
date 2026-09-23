@@ -2,3 +2,9 @@ __pycache__/
 *.pyc
 .DS_Store
 _old_local_copies/
+
+# app download folder (duplicates of files already in the repo root)
+Claude outputs/
+
+# empty artifact from a failed redirect run
+results_2dlists.json

@@ -1,0 +1,841 @@
+<title>Lecture Rating Matrix</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #f3f5f6;
+    --surface: #ffffff;
+    --surface-2: #eef1f3;
+    --ink: #171a1f;
+    --muted: #5b646f;
+    --faint: #8a939e;
+    --line: #dbe0e5;
+    --line-strong: #c3cbd3;
+    --accent: #1f6fb2;
+
+    --s-cov: #1f6fb2;
+    --s-ex: #c07818;
+    --s-imp: #10805b;
+    --s-del: #8154c7;
+
+    --good: #10805b;
+    --warn: #9a6a12;
+    --crit: #a83c2a;
+    --crit-wash: #fbeeeb;
+    --good-wash: #e9f4ef;
+
+    --display: "Newsreader", Georgia, "Times New Roman", serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #121519;
+      --surface: #191d22;
+      --surface-2: #21262d;
+      --ink: #e6eaef;
+      --muted: #98a2ae;
+      --faint: #6f7a86;
+      --line: #272d35;
+      --line-strong: #39424c;
+      --accent: #3f92d4;
+
+      --s-cov: #3f92d4;
+      --s-ex: #bd8020;
+      --s-imp: #2fa176;
+      --s-del: #9376d6;
+
+      --good: #2fa176;
+      --warn: #c99a3a;
+      --crit: #d4715e;
+      --crit-wash: #2a1c1a;
+      --good-wash: #14251f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #121519;
+    --surface: #191d22;
+    --surface-2: #21262d;
+    --ink: #e6eaef;
+    --muted: #98a2ae;
+    --faint: #6f7a86;
+    --line: #272d35;
+    --line-strong: #39424c;
+    --accent: #3f92d4;
+
+    --s-cov: #3f92d4;
+    --s-ex: #bd8020;
+    --s-imp: #2fa176;
+    --s-del: #9376d6;
+
+    --good: #2fa176;
+    --warn: #c99a3a;
+    --crit: #d4715e;
+    --crit-wash: #2a1c1a;
+    --good-wash: #14251f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 72px;
+  }
+
+  h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.15; letter-spacing: -0.01em; }
+  h2 { font-size: clamp(21px, 3.2vw, 26px); line-height: 1.25; }
+  h3 { font-size: 17px; line-height: 1.3; }
+
+  p { margin: 0; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* ---------- header ---------- */
+  header.masthead { display: flex; flex-direction: column; gap: 14px; }
+  .sub { color: var(--muted); max-width: 62ch; font-size: 16px; }
+  .byline { color: var(--faint); font-size: 13px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .chip {
+    font-family: var(--mono); font-size: 12px;
+    padding: 4px 9px; border-radius: 3px;
+    background: var(--surface); border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 500; }
+
+  hr.rule { border: 0; border-top: 1px solid var(--line); margin: 44px 0 0; }
+
+  section { margin-top: 44px; }
+  .sec-head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .sec-head p { color: var(--muted); max-width: 68ch; }
+
+  /* ---------- tables ---------- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--faint); font-weight: 500;
+    background: var(--surface-2); border-bottom: 1px solid var(--line-strong);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .dimcell { font-weight: 600; }
+  .swatch {
+    display: inline-block; width: 9px; height: 9px; border-radius: 2px;
+    margin-right: 7px; vertical-align: baseline;
+  }
+  tr.groupstart td { border-top: 1px solid var(--line-strong); }
+
+  /* ---------- chart ---------- */
+  .chart { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 22px 20px 18px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 20px; }
+  .legend span { display: inline-flex; align-items: center; font-size: 12.5px; color: var(--muted); }
+
+  .barrow { margin-bottom: 18px; }
+  .barrow:last-child { margin-bottom: 4px; }
+  .barlabel { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .barlabel .name { font-size: 13.5px; font-weight: 500; }
+  .barlabel .course { color: var(--faint); font-size: 12px; font-family: var(--mono); }
+  .bartotal { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13.5px; font-weight: 500; }
+
+  .track {
+    position: relative; height: 22px; width: 100%;
+    background: var(--surface-2); border-radius: 3px; overflow: hidden;
+    display: flex;
+  }
+  .seg { height: 100%; position: relative; }
+  .seg + .seg { margin-left: 2px; }
+  .seg:last-of-type { border-radius: 0 4px 4px 0; }
+  .seg:first-of-type { border-radius: 4px 0 0 4px; }
+  .seg:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+
+  .scalebar { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 7px; border-top: 1px solid var(--line); }
+  .scalebar span { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+
+  #tip {
+    position: fixed; z-index: 30; pointer-events: none;
+    background: var(--surface); border: 1px solid var(--line-strong);
+    border-radius: 4px; padding: 7px 10px; font-size: 12.5px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.14); max-width: 240px;
+  }
+  #tip .tname { font-weight: 600; display: block; }
+  #tip .tval { font-family: var(--mono); color: var(--muted); }
+
+  /* ---------- lecture cards ---------- */
+  .cards { display: grid; gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 16px 18px; }
+  .card.flagged { border-left: 3px solid var(--crit); }
+  .card h3 { margin-bottom: 3px; }
+  .card .meta { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-bottom: 10px; }
+  .card p { color: var(--muted); font-size: 14px; }
+  .scoreline { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 11px; }
+  .pip {
+    font-family: var(--mono); font-size: 11.5px; padding: 3px 7px;
+    border-radius: 3px; background: var(--surface-2); color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .pip.total { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 500; }
+  .pip.zero { color: var(--crit); border-color: var(--crit); background: var(--crit-wash); }
+
+  /* ---------- callout ---------- */
+  .callout {
+    background: var(--crit-wash); border: 1px solid var(--crit);
+    border-radius: 4px; padding: 18px 20px;
+  }
+  .callout .eyebrow { color: var(--crit); }
+  .callout h3 { margin: 4px 0 8px; }
+  .callout p { color: var(--ink); font-size: 14.5px; }
+  .callout p + p { margin-top: 10px; }
+
+  /* ---------- live demo ---------- */
+  .demo { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 4px; overflow: hidden; }
+  .demo-head {
+    padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--surface-2);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+  }
+  .demo-head .t { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .demo-body { padding: 18px; display: grid; gap: 16px; }
+
+  .field { display: grid; gap: 6px; }
+  label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); }
+
+  textarea, input[type="text"] {
+    width: 100%; font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line-strong); border-radius: 3px; padding: 10px 12px;
+    resize: vertical;
+  }
+  textarea { min-height: 132px; }
+  textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button {
+    font-family: var(--body); font-size: 13.5px; font-weight: 500;
+    padding: 8px 15px; border-radius: 3px; cursor: pointer;
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  }
+  button:hover { border-color: var(--ink); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { filter: brightness(1.08); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .samplebtns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .samplebtns button { font-size: 12.5px; padding: 6px 11px; font-family: var(--mono); }
+  .samplebtns button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+  .metric { background: var(--surface); padding: 12px 14px; }
+  .metric .k { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); display: block; }
+  .metric .v { font-family: var(--mono); font-size: 21px; font-variant-numeric: tabular-nums; display: block; margin-top: 3px; }
+  .metric .u { font-size: 11.5px; color: var(--muted); font-family: var(--mono); }
+
+  .gate { border-radius: 3px; padding: 12px 14px; border: 1px solid; font-size: 14px; }
+  .gate.pass { background: var(--good-wash); border-color: var(--good); }
+  .gate.fail { background: var(--crit-wash); border-color: var(--crit); }
+  .gate .verdict { font-weight: 600; font-family: var(--mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+  .gate.pass .verdict { color: var(--good); }
+  .gate.fail .verdict { color: var(--crit); }
+  .gate .why { color: var(--ink); }
+
+  .kwchips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .kw { font-family: var(--mono); font-size: 11.5px; padding: 2px 7px; border-radius: 3px; border: 1px solid; }
+  .kw.hit { color: var(--good); border-color: var(--good); background: var(--good-wash); }
+  .kw.miss { color: var(--faint); border-color: var(--line-strong); background: var(--surface-2); text-decoration: line-through; }
+
+  .marked {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.85;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 3px;
+    padding: 12px 14px; max-height: 210px; overflow-y: auto; color: var(--muted);
+  }
+  mark { padding: 1px 3px; border-radius: 2px; font-weight: 500; }
+  mark.ex { background: color-mix(in srgb, var(--s-ex) 26%, transparent); color: var(--ink); }
+  mark.imp { background: color-mix(in srgb, var(--s-imp) 26%, transparent); color: var(--ink); }
+
+  .note {
+    font-size: 13px; color: var(--muted); border-left: 2px solid var(--line-strong);
+    padding-left: 12px;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- pipeline ---------- */
+  .stages { display: grid; gap: 10px; }
+  .stage { display: flex; gap: 14px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 13px 16px; }
+  .stage .n { font-family: var(--mono); font-size: 12px; color: var(--faint); padding-top: 2px; min-width: 22px; }
+  .stage .body { flex: 1; }
+  .stage .body .st { font-weight: 600; font-size: 14.5px; }
+  .stage .body p { color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+  .status {
+    font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 3px 7px; border-radius: 3px; border: 1px solid; white-space: nowrap; align-self: flex-start;
+  }
+  .status.live { color: var(--good); border-color: var(--good); background: var(--good-wash); }
+  .status.partial { color: var(--warn); border-color: var(--warn); }
+  .status.pending { color: var(--faint); border-color: var(--line-strong); }
+
+  footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+  footer a { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow">Volunteer research · Texas Tech University</span>
+    <h1>Lecture Rating Matrix</h1>
+    <p class="sub">A rubric that scores a recorded lecture out of 10 on topic coverage, examples, and hands-on implementation, read from its transcript. This page shows the rubric, the scores it produced on four real lectures, and a live run of the automated signal-extraction stage.</p>
+    <p class="byline">Hamza Mehmood, supervised by Professor Maaz Amjad · demo build, September 2026</p>
+    <div class="chips">
+      <span class="chip"><b>4</b> lectures scored</span>
+      <span class="chip"><b>13</b> sub-criteria</span>
+      <span class="chip">rubric <b>v1</b></span>
+      <span class="chip">Stage 2 <b>runs live below</b></span>
+    </div>
+  </header>
+
+  <hr class="rule">
+
+  <!-- ============ RUBRIC ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">01 — The instrument</span>
+      <h2>The rubric</h2>
+      <p>Ten points split across four weighted dimensions, each broken into sub-criteria that carry their own point cap. The decomposition is deliberate: every score can be traced to the criterion that produced it, so a disagreement is settled line by line instead of re-arguing the total.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Code</th>
+            <th>Sub-criterion</th>
+            <th>What it measures</th>
+            <th class="num">Max</th>
+          </tr>
+        </thead>
+        <tbody id="rubric-body"></tbody>
+      </table>
+    </div>
+
+    <p class="note" style="margin-top:14px;">Topic Coverage and Implementation carry the most weight because they are the two things the lecture rating was asked to measure. Delivery and Structure is kept deliberately light at 1.5 points so that a well-organised but empty lecture cannot score well.</p>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">02 — Practical results</span>
+      <h2>Four lectures, scored</h2>
+      <p>One pilot lecture from MIT OpenCourseWare and three consecutive lectures from Howard University's CSCI 100, chosen to differ in kind: one conceptual, two implementation-heavy, and one that the course schedule mislabelled. Scores are hand-applied against the rubric; the automated judge (Stage 3) has not yet replaced the human pass.</p>
+    </div>
+
+    <div class="chart">
+      <div class="legend" id="legend"></div>
+      <div id="bars"></div>
+      <div class="scalebar">
+        <span>0</span><span>2.5</span><span>5</span><span>7.5</span><span>10</span>
+      </div>
+    </div>
+
+    <div class="cards" style="margin-top:16px;" id="cards"></div>
+  </section>
+
+  <!-- ============ THE FINDING ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">03 — What testing surfaced</span>
+      <h2>The 1.0 was not a bad lecture</h2>
+    </div>
+
+    <div class="callout">
+      <span class="eyebrow">Failure found in week 2 testing</span>
+      <h3>The pipeline scored the wrong video, correctly</h3>
+      <p>The third Howard lecture scored 1.0 out of 10, near zero on every content dimension. The first assumption was an over-harsh rubric. Reading the raw transcript showed something else: it contained project deadlines, a guest-speaker announcement and a recruiting event, and no course content at all.</p>
+      <p>Howard splits each class period into several numbered YouTube segments, an announcements clip followed by the lecture itself, and the public course schedule linked the first segment. The pipeline had fetched exactly the URL it was given and scored it accurately. The content simply was not a lecture.</p>
+      <p>The real defect was in the output: a 1.0 reads identically whether a lecture was poor or was never a lecture. At scale that silently corrupts a dataset. The fix is a content-verification gate that runs before any rubric is applied &mdash; it is implemented in the panel below, and returns an explicit unverified status instead of a score.</p>
+    </div>
+  </section>
+
+  <!-- ============ LIVE DEMO ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">04 — Running code</span>
+      <h2>Stage 2, live</h2>
+      <p>This panel runs the signal-extraction stage from <span class="code">lecture_rating_pipeline.py</span> in your browser, using the same marker patterns and the same keyword-overlap logic as the script. Paste any transcript, or load one of the sample texts, and the counts recompute against it.</p>
+    </div>
+
+    <div class="demo">
+      <div class="demo-head">
+        <span class="t">stage 2 · signal extraction + verification gate</span>
+        <div class="samplebtns" id="samples"></div>
+      </div>
+
+      <div class="demo-body">
+
+        <div class="field">
+          <label for="syllabus">Syllabus keywords for this session (comma separated)</label>
+          <input type="text" id="syllabus" value="two-dimensional list, nested loop, index, row, column, iteration">
+        </div>
+
+        <div class="field">
+          <label for="transcript">Transcript text</label>
+          <textarea id="transcript" spellcheck="false"></textarea>
+        </div>
+
+        <div class="controls">
+          <button class="primary" id="run">Run Stage 2</button>
+          <span class="code" id="srcnote"></span>
+        </div>
+
+        <div class="readout" id="readout"></div>
+
+        <div id="gate"></div>
+
+        <div class="field">
+          <label>Topic coverage &mdash; keyword overlap</label>
+          <div class="kwchips" id="kwchips"></div>
+        </div>
+
+        <div class="field">
+          <label>Matched markers in context <span style="text-transform:none;letter-spacing:0">(examples shaded amber, implementation shaded green)</span></label>
+          <div class="marked" id="marked"></div>
+        </div>
+
+        <p class="note"><b>A design decision this demo forced.</b> The gate first tested transcript length and keyword overlap as equal conditions, failing on either. Running it against a short excerpt of a genuine lecture showed the flaw immediately: length alone flags real content. Topic overlap is the decisive signal &mdash; it is what separated the announcements clip from the lectures &mdash; and length now only corroborates it.</p>
+
+        <p class="note"><b>A bug this demo surfaced.</b> Porting the patterns exactly revealed that the <span class="code">e.g.</span> marker in the current script never fires in normal prose. Its trailing word boundary requires a letter straight after the final period, so <span class="code">e.g. a seating chart</span> does not match while <span class="code">e.g.a</span> does. Every example marked with <span class="code">e.g.</span> has been going uncounted. One-line fix, queued for the next commit.</p>
+
+        <p class="note">Sample texts are paraphrased stand-ins written for this demo, not verbatim captions. The marker counts shown are real counts computed on whatever text sits in the box.</p>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PIPELINE ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">05 — Where the build stands</span>
+      <h2>Pipeline status</h2>
+    </div>
+    <div class="stages" id="stages"></div>
+  </section>
+
+  <footer>
+    Rubric design follows the decomposed, reason-before-score pattern from Professor Amjad's prior work on LLM-based rubric evaluation. Source, reports and literature review: <a href="https://github.com/hamzamehmood46-cpu/LectureEvaluationMatrix" target="_blank" rel="noopener">github.com/hamzamehmood46-cpu/LectureEvaluationMatrix</a>
+  </footer>
+
+</div>
+
+<div id="tip" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     RUBRIC DEFINITION
+     ============================================================ */
+  const DIMS = [
+    { key: "cov", name: "Topic Coverage", max: 3.5, color: "var(--s-cov)", rows: [
+      ["TC1", "Scope match", "Lecture addresses the topics scheduled for that session", 1.0],
+      ["TC2", "Depth", "Sub-concepts are explained, not just named", 1.0],
+      ["TC3", "Accuracy", "Content presented is technically correct", 1.0],
+      ["TC4", "Coherence", "Topics build logically on stated prerequisites", 0.5],
+    ]},
+    { key: "ex", name: "Examples", max: 2.0, color: "var(--s-ex)", rows: [
+      ["EX1", "Presence", "At least one worked example per major concept", 1.0],
+      ["EX2", "Variety", "Examples vary in context or difficulty", 0.5],
+      ["EX3", "Clarity", "Examples are walked through, not just stated", 0.5],
+    ]},
+    { key: "imp", name: "Implementation", max: 3.0, color: "var(--s-imp)", rows: [
+      ["IM1", "Presence", "Live coding, demo or applied walkthrough is shown", 1.5],
+      ["IM2", "Correctness", "What is shown actually runs and does what is claimed", 1.0],
+      ["IM3", "Connection", "Implementation is tied back to the underlying concept", 0.5],
+    ]},
+    { key: "del", name: "Delivery & Structure", max: 1.5, color: "var(--s-del)", rows: [
+      ["DS1", "Framing", "Clear intro or roadmap and a closing recap", 0.5],
+      ["DS2", "Pacing & clarity", "Pace and language suit the level", 0.5],
+      ["DS3", "Engagement", "Questions, prompts or checks for understanding", 0.5],
+    ]},
+  ];
+
+  const rb = document.getElementById("rubric-body");
+  DIMS.forEach(function (d) {
+    d.rows.forEach(function (r, i) {
+      const tr = document.createElement("tr");
+      if (i === 0) tr.className = "groupstart";
+      const dim = document.createElement("td");
+      if (i === 0) {
+        dim.className = "dimcell";
+        dim.innerHTML = '<span class="swatch" style="background:' + d.color + '"></span>' +
+          d.name + '<br><span class="code">' + d.max.toFixed(1) + ' pts</span>';
+      }
+      dim.rowSpan = 1;
+      const code = document.createElement("td"); code.className = "code"; code.textContent = r[0];
+      const sub = document.createElement("td"); sub.textContent = r[1];
+      const what = document.createElement("td"); what.style.color = "var(--muted)"; what.textContent = r[2];
+      const mx = document.createElement("td"); mx.className = "num"; mx.textContent = r[3].toFixed(1);
+      tr.append(dim, code, sub, what, mx);
+      rb.appendChild(tr);
+    });
+  });
+
+  /* ============================================================
+     SCORED LECTURES (hand-applied, from Week 1 & Week 2 reports)
+     ============================================================ */
+  const LECTURES = [
+    {
+      name: "Introduction to Programming with Python",
+      course: "MIT 6.100L · Lecture 1",
+      cov: 3.5, ex: 1.0, imp: 0.0, del: 1.0, total: 5.5,
+      flagged: false,
+      note: "The opening lecture of the course, and it reads like one: complete, accurate coverage of imperative versus declarative knowledge, objects, types and variables, with a clear roadmap. Implementation scored zero because no code is run — that is the session's job, not a fault. This lecture is why the matrix needs a session-type tag before scores are compared across a course."
+    },
+    {
+      name: "2-Dimensional Lists, Nested For Loops, Images",
+      course: "Howard CSCI 100 · Fall '21",
+      cov: 3.5, ex: 2.0, imp: 2.0, del: 1.5, total: 9.0,
+      flagged: false,
+      note: "Full marks on coverage for tying back to lists and loops before introducing the new idea, and near-full on examples: one running seating-chart example is carried step by step rather than stated. Implementation lost a point because real Python syntax is shown but nothing in the transcript shows it executing with visible output, so correctness could not be confirmed."
+    },
+    {
+      name: "Classes, Attributes, Object-Oriented Programming",
+      course: "Howard CSCI 100 · Fall '21",
+      cov: 3.5, ex: 2.0, imp: 2.5, del: 1.0, total: 9.0,
+      flagged: false,
+      note: "Strongest coherence of the four: it opens by reviewing the data types students already know, then argues none of them cleanly represent something with bundled properties. A role-playing-game character carries the whole lecture. Engagement scored zero — nothing in the transcript points to a question put to the class."
+    },
+    {
+      name: "“Computer Science Ethics” as scheduled",
+      course: "Howard CSCI 100 · announcements clip",
+      cov: 0.0, ex: 0.0, imp: 0.0, del: 1.0, total: 1.0,
+      flagged: true,
+      note: "Not an ethics lecture. The video the course schedule links is a short administrative segment covering deadlines, a guest speaker and a recruiting event. The rubric read a transcript with no ethics content and scored it accordingly. This is the matrix correctly refusing to invent content, and the reason the verification gate exists."
+    },
+  ];
+
+  /* legend */
+  const legend = document.getElementById("legend");
+  DIMS.forEach(function (d) {
+    const s = document.createElement("span");
+    s.innerHTML = '<span class="swatch" style="background:' + d.color + '"></span>' + d.name;
+    legend.appendChild(s);
+  });
+
+  /* stacked bars */
+  const bars = document.getElementById("bars");
+  const tip = document.getElementById("tip");
+
+  function showTip(e, name, val, lect) {
+    tip.innerHTML = '<span class="tname">' + name + '</span><span class="tval">' +
+      val.toFixed(1) + ' pts · ' + lect + '</span>';
+    tip.hidden = false;
+    const r = tip.getBoundingClientRect();
+    let x = e.clientX + 12, y = e.clientY - r.height - 10;
+    if (x + r.width > window.innerWidth - 8) x = window.innerWidth - r.width - 8;
+    if (y < 8) y = e.clientY + 16;
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+  function hideTip() { tip.hidden = true; }
+
+  LECTURES.forEach(function (L) {
+    const row = document.createElement("div");
+    row.className = "barrow";
+
+    const lab = document.createElement("div");
+    lab.className = "barlabel";
+    lab.innerHTML = '<span><span class="name">' + L.name + '</span> ' +
+      '<span class="course">' + L.course + '</span></span>' +
+      '<span class="bartotal">' + L.total.toFixed(1) + ' / 10</span>';
+
+    const track = document.createElement("div");
+    track.className = "track";
+
+    DIMS.forEach(function (d) {
+      const v = L[d.key];
+      if (v <= 0) return;
+      const seg = document.createElement("div");
+      seg.className = "seg";
+      seg.style.background = d.color;
+      seg.style.width = "calc(" + (v / 10 * 100) + "% - 1px)";
+      seg.tabIndex = 0;
+      seg.setAttribute("role", "img");
+      seg.setAttribute("aria-label", d.name + " " + v.toFixed(1) + " points, " + L.name);
+      seg.addEventListener("mousemove", function (e) { showTip(e, d.name, v, L.course); });
+      seg.addEventListener("mouseleave", hideTip);
+      seg.addEventListener("blur", hideTip);
+      track.appendChild(seg);
+    });
+
+    row.append(lab, track);
+    bars.appendChild(row);
+  });
+
+  /* lecture detail cards */
+  const cards = document.getElementById("cards");
+  LECTURES.forEach(function (L) {
+    const c = document.createElement("div");
+    c.className = "card" + (L.flagged ? " flagged" : "");
+    let pips = "";
+    DIMS.forEach(function (d) {
+      const v = L[d.key];
+      pips += '<span class="pip' + (v === 0 ? " zero" : "") + '">' + d.name.split(" ")[0] +
+        ' ' + v.toFixed(1) + '/' + d.max.toFixed(1) + '</span>';
+    });
+    pips += '<span class="pip total">' + L.total.toFixed(1) + ' / 10</span>';
+    c.innerHTML = '<h3>' + L.name + '</h3>' +
+      '<div class="meta">' + L.course + '</div>' +
+      '<div class="scoreline">' + pips + '</div>' +
+      '<p>' + L.note + '</p>';
+    cards.appendChild(c);
+  });
+
+  /* ============================================================
+     STAGE 2 — ported verbatim from lecture_rating_pipeline.py
+     ============================================================ */
+  const EXAMPLE_MARKERS = [
+    /\bfor example\b/g, /\blet'?s say\b/g, /\bsuppose\b/g, /\bimagine\b/g,
+    /\bconsider (?:this|the case)\b/g, /\bas an example\b/g, /\be\.g\.\b/g,
+    /\btake this case\b/g, /\bhere'?s an example\b/g,
+  ];
+  const IMPLEMENTATION_MARKERS = [
+    /\blet'?s (?:write|code|type|run|implement)\b/g, /\brun this\b/g,
+    /\bon (?:the|your) screen\b/g, /\bthe output is\b/g, /\bthis prints\b/g,
+    /\blet'?s open\b/g, /\bin (?:vs ?code|the terminal|jupyter)\b/g,
+    /\bdebug(?:ging)?\b/g, /\bsyntax error\b/g, /\btraceback\b/g,
+  ];
+
+  function normalise(t) { return t.replace(/[‘’]/g, "'"); }
+
+  function findMatches(text, patterns, kind) {
+    const lower = normalise(text).toLowerCase();
+    const hits = [];
+    patterns.forEach(function (p) {
+      p.lastIndex = 0;
+      let m;
+      while ((m = p.exec(lower)) !== null) {
+        hits.push({ start: m.index, end: m.index + m[0].length, kind: kind });
+        if (m.index === p.lastIndex) p.lastIndex++;
+      }
+    });
+    return hits;
+  }
+
+  function topicCoverage(text, keywords) {
+    const lower = normalise(text).toLowerCase();
+    const found = [], missing = [];
+    keywords.forEach(function (k) {
+      (lower.indexOf(k.toLowerCase()) !== -1 ? found : missing).push(k);
+    });
+    return { found: found, missing: missing,
+      ratio: keywords.length ? found.length / keywords.length : null };
+  }
+
+  /* Content-verification gate (proposed in the Week 2 report, implemented here).
+     Typical CSCI 100 lecture runs well over 2,000 spoken words. */
+  const TYPICAL_WORDS = 2000;
+  const LENGTH_FLOOR = 0.4;
+  const COVERAGE_FLOOR = 0.25;
+
+  const WEAK_COVERAGE = 0.5;
+
+  /* Coverage is the decisive signal; length only corroborates it. Building this
+     demo showed why: a short excerpt of a genuine lecture trips a length test on
+     its own, so length alone cannot be allowed to halt scoring. */
+  function verificationGate(wordCount, coverageRatio) {
+    const shortRun = wordCount < TYPICAL_WORDS * LENGTH_FLOOR;
+    const reasons = [];
+    let advisory = "";
+
+    if (coverageRatio !== null && coverageRatio < COVERAGE_FLOOR) {
+      reasons.push("syllabus keyword overlap is " + Math.round(coverageRatio * 100) +
+        "%, below the " + (COVERAGE_FLOOR * 100) + "% floor");
+      if (shortRun) {
+        reasons.push("and the transcript runs only " + wordCount + " words, well under a full session");
+      }
+    } else if (coverageRatio !== null && coverageRatio < WEAK_COVERAGE && shortRun) {
+      reasons.push("weak topic overlap (" + Math.round(coverageRatio * 100) +
+        "%) in a transcript of only " + wordCount + " words — too little evidence to score");
+    } else if (shortRun) {
+      advisory = " Length is below a full session (" + wordCount +
+        " words), which is expected for an excerpt and is treated as advisory only.";
+    }
+
+    return { pass: reasons.length === 0, reasons: reasons, advisory: advisory };
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function renderMarked(text, hits) {
+    if (!hits.length) return '<span style="color:var(--faint)">No markers matched in this text.</span>';
+    const sorted = hits.slice().sort(function (a, b) { return a.start - b.start; });
+    const merged = [];
+    sorted.forEach(function (h) {
+      const last = merged[merged.length - 1];
+      if (last && h.start < last.end) return;
+      merged.push(h);
+    });
+    let out = "", cursor = 0;
+    merged.forEach(function (h) {
+      const before = text.slice(cursor, h.start);
+      const trimmed = before.length > 90
+        ? escapeHtml(before.slice(0, 42)) + ' <span style="color:var(--faint)">…</span> ' +
+          escapeHtml(before.slice(-42))
+        : escapeHtml(before);
+      out += trimmed + '<mark class="' + h.kind + '">' +
+        escapeHtml(text.slice(h.start, h.end)) + "</mark>";
+      cursor = h.end;
+    });
+    const tail = text.slice(cursor);
+    out += tail.length > 90 ? escapeHtml(tail.slice(0, 60)) + " …" : escapeHtml(tail);
+    return out;
+  }
+
+  /* ---------- sample texts (paraphrased, written for this demo) ---------- */
+  const SAMPLES = [
+    {
+      id: "2d",
+      label: "2D lists lecture",
+      keywords: "two-dimensional list, nested loop, index, row, column, iteration",
+      text: "All right, last week we worked with lists and with for loops separately, so today we put the two together. A two-dimensional list is really just a list whose elements are themselves lists. Let's say you are keeping track of a classroom seating chart. Each row of desks is its own list, and the whole room is a list of those rows. So suppose the room has four rows and six seats in each row. To get at one particular seat you need two index values, one for the row and one for the column. Imagine you want the second seat in the first row. You write seating bracket zero bracket, then bracket one, because the first index picks the row and the second index picks the seat inside it. Now, to visit every seat you need one loop inside another loop. The outer loop walks the rows, the inner loop walks the columns of whichever row you are currently on. Let's write that out. For row in range four, then inside it, for seat in range six, and inside that we print the value at that position. Notice the indentation, because that is what tells Python which statements belong to the inner loop. If you get the indentation wrong here you will see a syntax error straight away. Consider this: what happens if you swap the order of the two loops? You still visit every seat, but you visit them column by column instead of row by row. Take a minute and tell me which index you would change first."
+    },
+    {
+      id: "oop",
+      label: "OOP lecture",
+      keywords: "class, attribute, object, method, instance, constructor",
+      text: "So far we have used integers, strings, lists and dictionaries, and each of those is fine for holding one kind of thing. But suppose you want to represent something that has several properties bundled together. For example, a character in a role-playing game has a name, a health value, a level and an inventory. You could keep four separate variables, but as soon as you have twenty characters that falls apart. This is what a class is for. A class is a blueprint that says what properties an object of that type will have. When you create an actual character from that blueprint, that is called an instance. Let's write one. Class Character, then inside it a constructor, def underscore underscore init underscore underscore, taking self, name, and health. Inside the constructor we say self dot name equals name and self dot health equals health. Those are attributes. Now imagine we create one: hero equals Character, quote Aria quote, one hundred. We now have an object, and hero dot name gives us back Aria. Methods are functions that belong to the class. Let's add one called take damage that subtracts from health. Def take damage, self, amount, and inside it self dot health equals self dot health minus amount. Consider the case where health drops below zero. We would want to handle that inside the method rather than everywhere we call it, and that is the whole point of bundling behaviour with the data."
+    },
+    {
+      id: "ann",
+      label: "Announcements clip",
+      keywords: "ethics, privacy, professional responsibility, bias, code of conduct",
+      text: "Good morning everyone, before we get started I have a few announcements. The project proposal is due Friday at eleven fifty nine, please submit it through the course page and not by email. We have a guest speaker coming in next Thursday from the industry advisory board, attendance counts toward your participation grade. Also the department is running a recruiting event in the engineering building on Wednesday afternoon, there will be several companies there and they are specifically looking for sophomores and juniors, so it is worth going even if you are not job hunting yet. One more thing, office hours are moving to Tuesday for the rest of the month. That is everything, we will pick up where we left off in a moment."
+    },
+  ];
+
+  const ta = document.getElementById("transcript");
+  const syl = document.getElementById("syllabus");
+  const srcnote = document.getElementById("srcnote");
+  const sampleWrap = document.getElementById("samples");
+  let activeSample = SAMPLES[0].id;
+
+  SAMPLES.forEach(function (s) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = s.label;
+    b.setAttribute("aria-pressed", s.id === activeSample ? "true" : "false");
+    b.addEventListener("click", function () {
+      activeSample = s.id;
+      ta.value = s.text;
+      syl.value = s.keywords;
+      Array.prototype.forEach.call(sampleWrap.children, function (btn) {
+        btn.setAttribute("aria-pressed", btn === b ? "true" : "false");
+      });
+      run();
+    });
+    sampleWrap.appendChild(b);
+  });
+
+  function run() {
+    const text = ta.value;
+    const keywords = syl.value.split(",").map(function (k) { return k.trim(); })
+      .filter(function (k) { return k.length; });
+
+    const words = text.split(/\s+/).filter(function (w) { return w.length; });
+    const wordCount = words.length;
+
+    const exHits = findMatches(text, EXAMPLE_MARKERS, "ex");
+    const impHits = findMatches(text, IMPLEMENTATION_MARKERS, "imp");
+    const per1k = function (n) { return wordCount ? +(n / wordCount * 1000).toFixed(2) : 0; };
+
+    const cov = topicCoverage(text, keywords);
+    const gate = verificationGate(wordCount, cov.ratio);
+
+    document.getElementById("readout").innerHTML = [
+      ['Words', wordCount, ''],
+      ['Example markers', exHits.length, per1k(exHits.length) + ' / 1k words'],
+      ['Implementation markers', impHits.length, per1k(impHits.length) + ' / 1k words'],
+      ['Keyword coverage', cov.ratio === null ? '—' : Math.round(cov.ratio * 100) + '%',
+        cov.found.length + ' of ' + keywords.length + ' terms'],
+    ].map(function (m) {
+      return '<div class="metric"><span class="k">' + m[0] + '</span>' +
+        '<span class="v">' + m[1] + '</span>' +
+        (m[2] ? '<span class="u">' + m[2] + '</span>' : '') + '</div>';
+    }).join("");
+
+    document.getElementById("gate").innerHTML =
+      '<div class="gate ' + (gate.pass ? 'pass' : 'fail') + '">' +
+      '<span class="verdict">' + (gate.pass
+        ? 'Verification gate passed — proceed to rubric scoring'
+        : 'Content mismatch — unverified, no score returned') + '</span>' +
+      '<span class="why">' + (gate.pass
+        ? 'Syllabus overlap is consistent with a real session on this topic.' + gate.advisory
+        : gate.reasons.join(", ") + '. The pipeline stops here rather than returning a number that would read as a poor lecture.') +
+      '</span></div>';
+
+    document.getElementById("kwchips").innerHTML =
+      cov.found.map(function (k) { return '<span class="kw hit">' + escapeHtml(k) + '</span>'; })
+        .concat(cov.missing.map(function (k) { return '<span class="kw miss">' + escapeHtml(k) + '</span>'; }))
+        .join("") || '<span class="code" style="color:var(--faint)">No keywords supplied.</span>';
+
+    document.getElementById("marked").innerHTML =
+      renderMarked(text, exHits.concat(impHits));
+
+    srcnote.textContent = gate.pass
+      ? "gate: pass · " + (exHits.length + impHits.length) + " markers matched"
+      : "gate: fail · scoring halted";
+  }
+
+  document.getElementById("run").addEventListener("click", run);
+
+  /* ---------- pipeline status ---------- */
+  const STAGES = [
+    ["Transcript acquisition", "Pull official captions for a lecture, falling back to speech-to-text when a video has none.", "partial", "Written, network-blocked"],
+    ["Signal extraction", "Cheap automated proxies: marker counts for examples and implementation, keyword overlap for coverage.", "live", "Running above"],
+    ["Verification gate", "Confirm the transcript is the lecture it claims to be before any rubric is applied.", "live", "Running above"],
+    ["LLM-as-judge scoring", "Reason through each sub-criterion against the transcript before assigning its score.", "pending", "Next"],
+    ["Human calibration", "Hand-score a batch and measure agreement before the automated score is trusted unsupervised.", "pending", "Blocked on Stage 3"],
+  ];
+  const stages = document.getElementById("stages");
+  STAGES.forEach(function (s, i) {
+    const d = document.createElement("div");
+    d.className = "stage";
+    d.innerHTML = '<span class="n">' + String(i + 1).padStart(2, "0") + '</span>' +
+      '<span class="body"><span class="st">' + s[0] + '</span><p>' + s[1] + '</p></span>' +
+      '<span class="status ' + s[2] + '">' + s[3] + '</span>';
+    stages.appendChild(d);
+  });
+
+  /* boot in a working state */
+  ta.value = SAMPLES[0].text;
+  run();
+})();
+</script>

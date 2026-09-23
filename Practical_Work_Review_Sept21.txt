@@ -1,0 +1,103 @@
+Practical Work on Automated Lecture Evaluation: What Exists, What Is Missing, What We Can Add
+
+Hamza Mehmood, prepared for Professor Maaz Amjad, September 2026
+
+Goal: Check whether anyone has actually built and deployed a system that scores lecture quality from a transcript, whether it is the same as what we are building, and what we can add on top of what already exists.
+
+Question asked: Has practical work been done on our research problem? If yes, is it the same as ours? If no, can we implement it? If it is already implemented, what additions can we make over it?
+
+Short answer: Yes, practical work exists and some of it is deployed at scale, but it scores how a teacher talks, not what a lecture covers. Nobody has implemented the content side we are building. The engineering pieces we need are already open source, so we can build on them instead of starting from zero.
+
+1. What has actually been built and deployed
+
+1.  TeachFX. Commercial, running in real K-12 schools. Teacher records a lesson in a mobile app, it is auto-transcribed, and NLP surfaces feedback. It measures teacher talk time, wait time, and questioning patterns. Focusing questions are detected with a fine-tuned BERT model (90% validation accuracy, but 80% precision and only 55% recall). A pre-registered randomized trial with 224 Utah math and science teachers over five months found the treatment group asked about 4.6 more focusing questions per hour, a 20% increase. No significant change in student talk time or student reasoning.
+
+2.  M-Powering Teachers. Stanford, Demszky and colleagues. A beta web application that gives teachers automated feedback from transcripts on uptake of student ideas, focusing versus funneling questions, and mathematical language. Validated in a randomized trial in a large-scale online course.
+
+3.  TalkMoves. University of Colorado Boulder. Open-source dataset of K-12 mathematics lesson transcripts annotated for teacher and student discursive moves, plus transformer models and an application that gives teachers personalized feedback on classroom discourse.
+
+4.  LLM-Rubric. Microsoft, ACL 2024, open source. A multidimensional rubric where an LLM answers each rubric question, and a small neural network with judge-specific and judge-independent parameters calibrates those answers to predict human ratings. Evaluated on dialogue systems, not lectures.
+
+5.  LLM evaluation of programming tasks in MOOC videos. Springer 2026. A self-hosted LLM evaluates student Python submissions embedded inside MOOC videos, integrated into the LIVE platform. Authors conclude a mix of automated and manual evaluation works best for now.
+
+6.  OpenRubric. MIT-licensed, published to npm. Generic rubric-scored feedback on any conversation transcript, YAML rubric, handles chunking of long transcripts, works with any OpenAI-compatible provider. Early stage but functional.
+
+2. Labeled data and benchmarks that already exist
+
+1.  NCTE Transcripts dataset (BEA 2023). Over 1,600 elementary mathematics classroom transcripts released publicly, each with human CLASS observation scores. This is the closest thing to ground truth for transcript-based teaching quality.
+
+2.  From Scoring to Explanations (2026). Uses 6,005 annotated segments from the NCTE corpus on the CLASS Quality of Feedback dimension, scored 1 to 7. Two findings matter for us. First, fine-tuned smaller models (BERT, RoBERTa, DeBERTa) beat instruction-tuned LLMs on accuracy, and the LLMs drift much further from human scores. Second, SHAP attributions gave more faithful explanations than LLM-written rationales, and the two barely agreed with each other. Code was not released.
+
+3. Is any of it the same as ours?
+
+No. The overlap is in machinery, not in what is being scored.
+
+1.  Everything deployed scores discourse and interaction, meaning talk ratio, question type, uptake of student ideas. None of them score whether the stated topic was actually covered.
+
+2.  No existing system scores examples given or implementation and hands-on demonstration as rubric dimensions. The MOOC paper evaluates student code, not the instructor's demonstration.
+
+3.  All deployed tools target K-12 classrooms, which are dialogue-heavy and two-way. We are targeting recorded university lectures, which are mostly one-way monologue. The discourse features those tools depend on are thin or absent in our data.
+
+4.  Existing content-alignment work (curricular analytics, syllabus-to-description matching) operates at course level, not at the level of a single lecture transcript segmented by topic.
+
+5.  Every deployed tool assumes the recording it receives is the lesson. None of them check that first. Our Howard University test showed why that matters, since the course schedule linked an announcements clip instead of the lecture.
+
+4. Can we implement it? Yes, and partly on top of existing pieces
+
+1.  Use LLM-Rubric's calibration approach or OpenRubric's transcript chunking as a base instead of writing the scoring loop from scratch.
+
+2.  Use TreeSeg to segment the transcript by topic before scoring coverage, so five minutes of real explanation is not counted the same as a passing mention.
+
+3.  Use the NCTE transcripts as an external check. The domain is different (K-12 math, CLASS dimensions), but it is the only public set of transcripts with human quality ratings, so it tells us whether our judge tracks human raters at all before we trust it on lectures.
+
+4.  Keep our own seed set, currently the MIT pilot and three Howard University CSCI 100 lectures, as the university-level test bed.
+
+5. What we can add over what already exists
+
+1.  Content coverage against the syllabus. Segment-level coverage of the syllabus topic, weighted by how much time was actually spent, instead of keyword counts over the whole transcript. Nobody does this at lecture level.
+
+2.  Example density and quality. Not just whether an example appeared, but how many, how varied, and whether it was worked through or only mentioned.
+
+3.  Implementation and demonstration detection. Did the instructor actually write or run code and show output, or only talk about it. No existing system scores this, and it is the dimension that matters most for computer science lectures.
+
+4.  Calibration to human raters. Borrow the LLM-Rubric idea of predicting a human rater's score from the LLM's per-criterion outputs, rather than taking the LLM's number at face value.
+
+5.  Hybrid scoring. The 2026 results say small fine-tuned models score more accurately while LLMs give readable reasons. We can let the LLM produce the auditable rationale and compare its number against a cheaper model or a rule-based signal, and flag the cases where they disagree.
+
+6.  Explanation faithfulness as part of validation. Instead of only spot-checking scores by hand, check whether the reasons the judge gives actually correspond to the parts of the transcript that drove the score, using the SHAP-versus-rationale comparison as the method.
+
+7.  Content-verification gate. A cheap check between transcript acquisition and scoring that confirms the video is the lecture it claims to be, before any rubric is applied. This is a gap in every deployed system we found.
+
+8.  Domain. All deployed work is general K-12. Nothing is built for higher education or for CS lectures where live coding is the point.
+
+6. Suggested next steps
+
+1.  Pull the NCTE transcripts and run our current rubric prompt against a small sample to see how far the LLM scores sit from the human CLASS ratings.
+
+2.  Add the content-verification gate and TreeSeg segmentation to the pipeline before the next round of lecture scoring.
+
+3.  Decide whether to build our scoring loop on LLM-Rubric or OpenRubric rather than maintaining our own.
+
+4.  Score a larger set of university CS lectures by hand to build our own small labeled set, since none exists for this domain.
+
+Sources
+
+TeachFX randomized trial: Automated Feedback Improves Teachers' Questioning Quality in Brick-and-Mortar Classrooms, Computers & Education, 2024 (edworkingpapers.com/ai23-875).
+
+M-Powering Teachers: Demszky et al., Stanford; Can Automated Feedback Improve Teachers' Uptake of Student Ideas, EEPA, 2024.
+
+TalkMoves: The TalkMoves Dataset, LREC 2022, aclanthology.org/2022.lrec-1.497; code at github.com/SumnerLab/TalkMoves.
+
+LLM-Rubric: A Multidimensional, Calibrated Approach to Automated Evaluation of Natural Language Texts, ACL 2024; code at github.com/microsoft/LLM-Rubric.
+
+On Using an LLM-Based Approach for Automatic Evaluation of Programming Tasks in MOOC Videos, Springer, 2026, DOI 10.1007/978-3-032-30784-2_13.
+
+OpenRubric: github.com/ahamedafri/openrubric.
+
+The NCTE Transcripts: A Dataset of Elementary Math Classroom Transcripts, BEA 2023, aclanthology.org/2023.bea-1.44.
+
+From Scoring to Explanations: Evaluating SHAP and LLM Rationales for Rubric-based Teaching Quality Assessment, arXiv 2606.05180, 2026.
+
+From Course to Skill: Evaluating LLM Performance in Curricular Analytics, arXiv 2505.02324.
+
+AI-University: An LLM-based platform for instructional alignment to scientific classrooms, arXiv 2504.08846.

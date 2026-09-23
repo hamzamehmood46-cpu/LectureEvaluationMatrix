@@ -1,0 +1,62 @@
+{
+  "run_date": "2026-09-23",
+  "note": "First run of Stages 1-2 against real YouTube captions. Syllabus keyword lists were reconstructed from each lecture's one-line schedule title, not supplied by the course.",
+  "lectures": [
+    {
+      "video_id": "hEh_6otWzNs",
+      "title": "2-Dimensional Lists, Nested For Loops, Images",
+      "course": "Howard CSCI 100",
+      "word_count": 1457,
+      "example_marker_count": 3,
+      "example_markers_per_1000_words": 2.06,
+      "implementation_marker_count": 1,
+      "implementation_markers_per_1000_words": 0.69,
+      "topic_coverage": {
+        "found": ["two-dimensional list", "index", "row", "column"],
+        "missing": ["nested loop", "iteration"],
+        "coverage_ratio": 0.6666666666666666
+      },
+      "hand_scores": { "coverage": 3.5, "examples": 2.0, "implementation": 2.0, "delivery": 1.5, "total": 9.0 },
+      "gate": "pass"
+    },
+    {
+      "video_id": "l_n_7mOqqjs",
+      "title": "Classes, Attributes, Object-Oriented Programming",
+      "course": "Howard CSCI 100",
+      "word_count": 882,
+      "example_marker_count": 1,
+      "example_markers_per_1000_words": 1.13,
+      "implementation_marker_count": 0,
+      "implementation_markers_per_1000_words": 0.0,
+      "topic_coverage": {
+        "found": ["class", "attribute", "object"],
+        "missing": ["method", "instance", "constructor"],
+        "coverage_ratio": 0.5
+      },
+      "hand_scores": { "coverage": 3.5, "examples": 2.0, "implementation": 2.5, "delivery": 1.0, "total": 9.0 },
+      "gate": "pass"
+    },
+    {
+      "video_id": "U8M4DlCE2ms",
+      "title": "Computer Science Ethics (as scheduled) - actually an announcements clip",
+      "course": "Howard CSCI 100",
+      "word_count": 397,
+      "example_marker_count": 0,
+      "example_markers_per_1000_words": 0.0,
+      "implementation_marker_count": 0,
+      "implementation_markers_per_1000_words": 0.0,
+      "topic_coverage": {
+        "found": [],
+        "missing": ["ethics", "privacy", "professional responsibility", "bias", "code of conduct"],
+        "coverage_ratio": 0.0
+      },
+      "hand_scores": { "coverage": 0.0, "examples": 0.0, "implementation": 0.0, "delivery": 1.0, "total": 1.0 },
+      "gate": "fail"
+    }
+  ],
+  "findings": [
+    "Implementation marker counts rank the two content lectures in the opposite order to hand-scoring: OOP scored higher by hand (2.5 vs 2.0) but returned zero implementation markers.",
+    "Markers detect announcements of examples and demos, not the examples and demos themselves.",
+    "Measured segment lengths (1457, 882, 397 words) show these are lecture segments, not full class periods. The 2000-word 'typical session' assumption was wrong; ~1170 words is the measured reference for content segments."
+  ]
+}
